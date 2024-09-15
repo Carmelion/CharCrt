@@ -1,0 +1,69 @@
+Metadata-Version: 2.1
+Name: Flask-SQLAlchemy-Lite
+Version: 0.1.0
+Summary: Integrate SQLAlchemy with Flask.
+Author: David Lord
+Maintainer-email: Pallets <contact@palletsprojects.com>
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Classifier: Development Status :: 4 - Beta
+Classifier: Framework :: Flask
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Typing :: Typed
+Requires-Dist: flask[async]
+Requires-Dist: sqlalchemy[asyncio]
+Project-URL: Changes, https://flask-sqlalchemy-lite.readthedocs.io/page/changes/
+Project-URL: Chat, https://discord.gg/pallets
+Project-URL: Documentation, https://flask-sqlalchemy-lite.readthedocs.io
+Project-URL: Donate, https://palletsprojects.com/donate
+Project-URL: Source, https://github.com/pallets-eco/flask-sqlalchemy-lite/
+
+# Flask-SQLAlchemy-Lite
+
+Integrate [SQLAlchemy] with [Flask]. Use Flask's config to define SQLAlchemy
+database engines. Create SQLAlchemy ORM sessions that are cleaned up
+automatically after requests.
+
+Intended to be a replacement for [Flask-SQLAlchemy]. Unlike the prior extension,
+this one does not attempt to manage the model base class, tables, metadata, or
+multiple binds for sessions. This makes the extension much simpler, letting the
+developer use standard SQLAlchemy instead.
+
+[SQLAlchemy]: https://sqlalchemy.org
+[Flask]: https://flask.palletsprojects.com
+[Flask-SQLAlchemy]: https://flask-sqlalchemy.readthedocs.io
+
+
+ ## A Simple Example
+
+```python
+from flask import Flask
+from flask_sqlalchemy_lite import SQLAlchemy
+from sqlalchemy import select
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class User(Base):
+    __tablename__ = "user"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(unique=True)
+
+
+app = Flask(__name__)
+app.config["SQLALCHEMY_ENGINES"] = {"default": "sqlite:///default.sqlite"}
+db = SQLAlchemy(app)
+
+with app.app_context():
+    Base.metadata.create_all(db.engine)
+
+    db.session.add(User(username="example"))
+    db.session.commit()
+
+    users = db.session.scalars(select(User))
+```
+
